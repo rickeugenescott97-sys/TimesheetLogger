@@ -11,12 +11,12 @@
   <DefaultLocale>en-AU</DefaultLocale>
   <DisplayName DefaultValue="Timesheet Logger"/>
   <Description DefaultValue="Log what you did every 15, 30, or 60 minutes directly into your Outlook calendar."/>
-  <IconUrl DefaultValue="https://YOUR-HOSTING-URL/assets/icon-64.png"/>
-  <HighResolutionIconUrl DefaultValue="https://YOUR-HOSTING-URL/assets/icon-128.png"/>
-  <SupportUrl DefaultValue="https://YOUR-HOSTING-URL"/>
+  <IconUrl DefaultValue="https://rickeugenescott97-sys.github.io/TimesheetLogger/assets/icon-64.png"/>
+  <HighResolutionIconUrl DefaultValue="https://rickeugenescott97-sys.github.io/TimesheetLogger/assets/icon-128.png"/>
+  <SupportUrl DefaultValue="https://rickeugenescott97-sys.github.io/TimesheetLogger"/>
 
   <AppDomains>
-    <AppDomain>https://YOUR-HOSTING-URL</AppDomain>
+    <AppDomain>https://rickeugenescott97-sys.github.io/TimesheetLogger</AppDomain>
   </AppDomains>
 
   <Hosts>
@@ -32,7 +32,7 @@
   <FormSettings>
     <Form xsi:type="ItemRead">
       <DesktopSettings>
-        <SourceLocation DefaultValue="https://YOUR-HOSTING-URL/taskpane.html"/>
+        <SourceLocation DefaultValue="https://rickeugenescott97-sys.github.io/TimesheetLogger/taskpane.html"/>
         <RequestedHeight>550</RequestedHeight>
       </DesktopSettings>
     </Form>
@@ -83,13 +83,13 @@
 
     <Resources>
       <bt:Images>
-        <bt:Image id="Icon.16x16" DefaultValue="https://YOUR-HOSTING-URL/assets/icon-16.png"/>
-        <bt:Image id="Icon.32x32" DefaultValue="https://YOUR-HOSTING-URL/assets/icon-32.png"/>
-        <bt:Image id="Icon.80x80" DefaultValue="https://YOUR-HOSTING-URL/assets/icon-80.png"/>
+        <bt:Image id="Icon.16x16" DefaultValue="https://rickeugenescott97-sys.github.io/TimesheetLogger/assets/icon-16.png"/>
+        <bt:Image id="Icon.32x32" DefaultValue="https://rickeugenescott97-sys.github.io/TimesheetLogger/assets/icon-32.png"/>
+        <bt:Image id="Icon.80x80" DefaultValue="https://rickeugenescott97-sys.github.io/TimesheetLogger/assets/icon-80.png"/>
       </bt:Images>
       <bt:Urls>
-        <bt:Url id="Commands.Url" DefaultValue="https://YOUR-HOSTING-URL/commands.html"/>
-        <bt:Url id="Taskpane.Url" DefaultValue="https://YOUR-HOSTING-URL/taskpane.html"/>
+        <bt:Url id="Commands.Url" DefaultValue="https://rickeugenescott97-sys.github.io/TimesheetLogger/commands.html"/>
+        <bt:Url id="Taskpane.Url" DefaultValue="https://rickeugenescott97-sys.github.io/TimesheetLogger/taskpane.html"/>
       </bt:Urls>
       <bt:ShortStrings>
         <bt:String id="GroupLabel" DefaultValue="Timesheet"/>
