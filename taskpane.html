@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Timesheet Logger</title>
+  <script src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #f5f4f0;
+      --surface:  #ffffff;
+      --border:   #e0ddd6;
+      --border2:  #c8c4bc;
+      --accent:   #1a1a1a;
+      --green:    #2d6a4f;
+      --green-lt: #e8f5ef;
+      --amber:    #b45309;
+      --amber-lt: #fef3c7;
+      --red:      #dc2626;
+      --text:     #1a1a1a;
+      --muted:    #6b6560;
+      --radius:   3px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-size: 13px;
+    }
+
+    .shell {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      padding: 0;
+    }
+
+    /* ---- HEADER ---- */
+    .header {
+      background: var(--accent);
+      color: #fff;
+      padding: 14px 16px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .logo {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+
+    .logo span {
+      opacity: 0.45;
+      font-weight: 400;
+    }
+
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      padding: 3px 8px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      color: rgba(255,255,255,0.5);
+      transition: all 0.3s;
+    }
+
+    .status-badge.running {
+      background: var(--green-lt);
+      border-color: #86efac;
+      color: var(--green);
+    }
+
+    .dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .status-badge.running .dot {
+      animation: blink 1.2s infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.2; }
+    }
+
+    /* ---- CLOCK STRIP ---- */
+    .clock-strip {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .clock-time {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 26px;
+      font-weight: 600;
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
+    .clock-meta {
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .clock-meta strong {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* ---- PROGRESS STRIP ---- */
+    .progress-strip {
+      height: 2px;
+      background: var(--border);
+      position: relative;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--green);
+      transition: width 1s linear;
+    }
+
+    /* ---- BODY ---- */
+    .body {
+      flex: 1;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* ---- SECTION ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+
+    .section-head {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .section-body {
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    /* ---- FORM FIELDS ---- */
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .field label {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    .field input,
+    .field select {
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 6px 8px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      color: var(--text);
+      width: 100%;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .field input:focus,
+    .field select:focus {
+      border-color: var(--accent);
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    /* ---- BUTTONS ---- */
+    .btn-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: var(--radius);
+      padding: 9px 12px;
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.12s;
+      letter-spacing: 0.1px;
+    }
+
+    .btn-start {
+      background: var(--accent);
+      color: #fff;
+      grid-column: span 2;
+    }
+
+    .btn-start:hover { background: #333; }
+    .btn-start:disabled { background: var(--border2); color: var(--muted); cursor: not-allowed; }
+
+    .btn-stop {
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      color: var(--red);
+    }
+
+    .btn-stop:hover { background: #fef2f2; border-color: var(--red); }
+    .btn-stop:disabled { color: var(--muted); border-color: var(--border); cursor: not-allowed; }
+
+    .btn-lognow {
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      color: var(--text);
+    }
+
+    .btn-lognow:hover { background: var(--surface); border-color: var(--accent); }
+
+    /* ---- LOG ---- */
+    .log-list {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .log-list::-webkit-scrollbar { width: 3px; }
+    .log-list::-webkit-scrollbar-track { background: transparent; }
+    .log-list::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+    .log-entry {
+      display: flex;
+      gap: 8px;
+      padding: 6px 8px;
+      background: var(--bg);
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      animation: slideIn 0.15s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-3px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .log-time {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10px;
+      color: var(--green);
+      white-space: nowrap;
+      padding-top: 1px;
+      font-weight: 500;
+    }
+
+    .log-text {
+      font-size: 12px;
+      line-height: 1.4;
+      color: var(--text);
+      word-break: break-word;
+    }
+
+    .log-empty {
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      padding: 16px 0;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    .clear-btn {
+      font-size: 10px;
+      color: var(--muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-family: 'IBM Plex Mono', monospace;
+      padding: 0;
+    }
+
+    .clear-btn:hover { color: var(--red); }
+
+    /* ---- PROMPT OVERLAY ---- */
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(245, 244, 240, 0.92);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      backdrop-filter: blur(2px);
+    }
+
+    .overlay.active { display: flex; }
+
+    .prompt-card {
+      background: var(--surface);
+      border: 2px solid var(--accent);
+      border-radius: 4px;
+      padding: 20px;
+      width: 100%;
+      max-width: 340px;
+      box-shadow: 4px 4px 0 var(--accent);
+      animation: popIn 0.18s ease;
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: scale(0.96); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    .prompt-slot {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--green);
+      margin-bottom: 6px;
+      letter-spacing: 0.3px;
+    }
+
+    .prompt-q {
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.3;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .prompt-input {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 8px 10px;
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-size: 13px;
+      color: var(--text);
+      resize: none;
+      outline: none;
+      min-height: 64px;
+      transition: border-color 0.15s;
+      margin-bottom: 10px;
+    }
+
+    .prompt-input:focus { border-color: var(--accent); }
+
+    .prompt-btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-save {
+      flex: 1;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      padding: 9px;
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-save:hover { background: #333; }
+
+    .btn-skip {
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      color: var(--muted);
+      border-radius: var(--radius);
+      padding: 9px 14px;
+      font-family: 'IBM Plex Sans', sans-serif;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .btn-skip:hover { border-color: var(--border2); color: var(--text); }
+
+    /* ---- TOAST ---- */
+    .toast {
+      position: fixed;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%) translateY(50px);
+      background: var(--accent);
+      color: #fff;
+      padding: 6px 14px;
+      border-radius: 2px;
+      font-size: 11px;
+      font-weight: 500;
+      font-family: 'IBM Plex Mono', monospace;
+      transition: transform 0.25s ease;
+      z-index: 200;
+      white-space: nowrap;
+    }
+
+    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.error { background: var(--red); }
+  </style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="logo">timesheet<span>.logger</span></div>
+    <div class="status-badge" id="statusBadge">
+      <div class="dot"></div>
+      <span id="statusText">stopped</span>
+    </div>
+  </div>
+
+  <!-- CLOCK -->
+  <div class="clock-strip">
+    <div class="clock-time" id="clockTime">--:-- --</div>
+    <div class="clock-meta" id="clockMeta">Start tracker to begin logging</div>
+  </div>
+  <div class="progress-strip">
+    <div class="progress-fill" id="progressFill" style="width:0%"></div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body">
+
+    <!-- SETTINGS -->
+    <div class="section">
+      <div class="section-head">Settings</div>
+      <div class="section-body">
+        <div class="field">
+          <label>Calendar name</label>
+          <input type="text" id="calName" value="Timesheet Logger" placeholder="Exact calendar name in Outlook"/>
+        </div>
+        <div class="two-col">
+          <div class="field">
+            <label>Start time</label>
+            <input type="time" id="startTime" value="07:30"/>
+          </div>
+          <div class="field">
+            <label>End time</label>
+            <input type="time" id="endTime" value="17:00"/>
+          </div>
+        </div>
+        <div class="field">
+          <label>Prompt interval</label>
+          <select id="interval">
+            <option value="15">Every 15 minutes</option>
+            <option value="30">Every 30 minutes</option>
+            <option value="60">Every 60 minutes</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="btn-row">
+      <button class="btn btn-start" id="btnStart" onclick="startTracker()">Start Tracker</button>
+      <button class="btn btn-stop" id="btnStop" onclick="stopTracker()" disabled>Stop</button>
+      <button class="btn btn-lognow" onclick="triggerManualPrompt()">Log Now</button>
+    </div>
+
+    <!-- TODAY'S LOG -->
+    <div class="section">
+      <div class="section-head">
+        <span>Today's log</span>
+        <button class="clear-btn" onclick="clearLog()">clear</button>
+      </div>
+      <div class="section-body" style="padding: 8px 12px;">
+        <div class="log-list" id="logList">
+          <div class="log-empty">— no entries yet —</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- PROMPT OVERLAY -->
+<div class="overlay" id="overlay">
+  <div class="prompt-card">
+    <div class="prompt-slot" id="promptSlot">11:45 AM  —  12:00 PM</div>
+    <div class="prompt-q">What did you do in the last <span id="promptMins">15</span> minutes?</div>
+    <textarea class="prompt-input" id="promptInput" placeholder="Type here..."></textarea>
+    <div class="prompt-btns">
+      <button class="btn-save" onclick="saveEntry()">Save to Calendar</button>
+      <button class="btn-skip" onclick="skipEntry()">Skip</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ---- STATE ----
+  let isRunning     = false;
+  let timerHandle   = null;
+  let clockHandle   = null;
+  let nextFireTime  = null;
+  let currentSlotStart = null;
+  let logEntries    = [];
+  let intervalMins  = 15;
+
+  // ---- OFFICE INIT ----
+  Office.onReady(function(info) {
+    if (info.host === Office.HostType.Outlook) {
+      startClock();
+      loadSettings();
+      loadLog();
+    }
+  });
+
+  // ---- CLOCK ----
+  function startClock() {
+    updateClock();
+    clockHandle = setInterval(updateClock, 1000);
+  }
+
+  function updateClock() {
+    const now = new Date();
+    document.getElementById('clockTime').textContent =
+      now.toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+    if (isRunning && nextFireTime) {
+      const msLeft = nextFireTime - now;
+      if (msLeft <= 0) return;
+      const totalMs = intervalMins * 60 * 1000;
+      const pct = Math.max(0, Math.min(100, ((totalMs - msLeft) / totalMs) * 100));
+      document.getElementById('progressFill').style.width = pct + '%';
+      const minsLeft = Math.ceil(msLeft / 60000);
+      document.getElementById('clockMeta').innerHTML =
+        'Next prompt in <strong>' + minsLeft + ' min' + (minsLeft !== 1 ? 's' : '') + '</strong>';
+    }
+  }
+
+  // ---- SETTINGS PERSISTENCE ----
+  function saveSettings() {
+    try {
+      localStorage.setItem('tl_calname',   document.getElementById('calName').value);
+      localStorage.setItem('tl_starttime', document.getElementById('startTime').value);
+      localStorage.setItem('tl_endtime',   document.getElementById('endTime').value);
+      localStorage.setItem('tl_interval',  document.getElementById('interval').value);
+    } catch(e) {}
+  }
+
+  function loadSettings() {
+    try {
+      const cal   = localStorage.getItem('tl_calname');
+      const start = localStorage.getItem('tl_starttime');
+      const end   = localStorage.getItem('tl_endtime');
+      const intv  = localStorage.getItem('tl_interval');
+      if (cal)   document.getElementById('calName').value   = cal;
+      if (start) document.getElementById('startTime').value = start;
+      if (end)   document.getElementById('endTime').value   = end;
+      if (intv)  document.getElementById('interval').value  = intv;
+    } catch(e) {}
+  }
+
+  // ---- START / STOP ----
+  function startTracker() {
+    if (isRunning) return;
+    saveSettings();
+
+    intervalMins = parseInt(document.getElementById('interval').value);
+
+    const now = new Date();
+    const [endH, endM] = document.getElementById('endTime').value.split(':').map(Number);
+    const endTime = new Date(now);
+    endTime.setHours(endH, endM, 0, 0);
+
+    if (now >= endTime) {
+      showToast('Work hours are over for today.', true);
+      return;
+    }
+
+    isRunning = true;
+    scheduleNext();
+    setRunningUI(true);
+    showToast('Tracker started.');
+  }
+
+  function stopTracker() {
+    if (!isRunning) return;
+    isRunning = false;
+    clearTimeout(timerHandle);
+    nextFireTime = null;
+    setRunningUI(false);
+    document.getElementById('progressFill').style.width = '0%';
+    document.getElementById('clockMeta').textContent = 'Start tracker to begin logging';
+    showToast('Tracker stopped.');
+  }
+
+  function setRunningUI(running) {
+    const badge = document.getElementById('statusBadge');
+    badge.className = 'status-badge' + (running ? ' running' : '');
+    document.getElementById('statusText').textContent = running ? 'running' : 'stopped';
+    document.getElementById('btnStart').disabled = running;
+    document.getElementById('btnStop').disabled  = !running;
+  }
+
+  // ---- SCHEDULING - snap to nominal boundaries ----
+  function scheduleNext() {
+    if (!isRunning) return;
+
+    const now = new Date();
+    const [endH, endM] = document.getElementById('endTime').value.split(':').map(Number);
+    const endTime = new Date(now);
+    endTime.setHours(endH, endM, 0, 0);
+
+    if (now >= endTime) {
+      stopTracker();
+      showToast('End of work hours. Tracker stopped.');
+      return;
+    }
+
+    // Snap to next nominal boundary (:00, :15/:30/:60 etc)
+    const intervalMs = intervalMins * 60 * 1000;
+    const msNow = (now.getHours() * 60 + now.getMinutes()) * 60000 + now.getSeconds() * 1000;
+    let msToNext = intervalMs - (msNow % intervalMs);
+    if (msToNext === 0) msToNext = intervalMs;
+
+    nextFireTime = new Date(now.getTime() + msToNext);
+
+    timerHandle = setTimeout(function() {
+      if (!isRunning) return;
+      firePrompt();
+      scheduleNext();
+    }, msToNext);
+  }
+
+  function firePrompt() {
+    const now = new Date();
+    const [startH, startM] = document.getElementById('startTime').value.split(':').map(Number);
+    const [endH, endM]     = document.getElementById('endTime').value.split(':').map(Number);
+    const startTime = new Date(now); startTime.setHours(startH, startM, 0, 0);
+    const endTime   = new Date(now); endTime.setHours(endH, endM, 0, 0);
+    if (now < startTime || now > endTime) return;
+
+    // Slot = last completed interval
+    const intervalMs = intervalMins * 60 * 1000;
+    const slotEnd   = new Date(Math.floor(now.getTime() / intervalMs) * intervalMs);
+    const slotStart = new Date(slotEnd.getTime() - intervalMs);
+
+    showPrompt(slotStart, slotEnd);
+  }
+
+  function triggerManualPrompt() {
+    const now = new Date();
+    const intervalMs = intervalMins * 60 * 1000;
+    // Last completed slot
+    const slotEnd   = new Date(Math.floor(now.getTime() / intervalMs) * intervalMs);
+    const slotStart = new Date(slotEnd.getTime() - intervalMs);
+    showPrompt(slotStart, slotEnd);
+  }
+
+  // ---- PROMPT ----
+  function showPrompt(slotStart, slotEnd) {
+    currentSlotStart = slotStart;
+    intervalMins = parseInt(document.getElementById('interval').value);
+
+    const fmt = d => d.toLocaleTimeString('en-AU', {
+      hour: 'numeric', minute: '2-digit', hour12: true
+    });
+
+    document.getElementById('promptSlot').textContent = fmt(slotStart) + '  —  ' + fmt(slotEnd);
+    document.getElementById('promptMins').textContent = intervalMins;
+    document.getElementById('promptInput').value = '';
+    document.getElementById('overlay').classList.add('active');
+    setTimeout(() => document.getElementById('promptInput').focus(), 100);
+  }
+
+  function saveEntry() {
+    const text = document.getElementById('promptInput').value.trim();
+    if (!text) {
+      document.getElementById('promptInput').focus();
+      return;
+    }
+
+    const intervalMs  = intervalMins * 60 * 1000;
+    const slotStart   = currentSlotStart || new Date(Date.now() - intervalMs);
+    const slotEnd     = new Date(slotStart.getTime() + intervalMs);
+    const calName     = document.getElementById('calName').value.trim() || 'Timesheet Logger';
+
+    writeToCalendar(slotStart, slotEnd, text, calName);
+    addToLog(slotStart, slotEnd, text);
+    closeOverlay();
+    showToast('Saved to ' + calName);
+  }
+
+  function skipEntry() {
+    closeOverlay();
+    showToast('Slot skipped.');
+  }
+
+  function closeOverlay() {
+    document.getElementById('overlay').classList.remove('active');
+  }
+
+  document.getElementById('promptInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); saveEntry(); }
+    if (e.key === 'Escape') skipEntry();
+  });
+
+  // ---- WRITE TO CALENDAR via EWS ----
+  function writeToCalendar(start, end, subject, calendarName) {
+    const startISO = start.toISOString();
+    const endISO   = end.toISOString();
+
+    const ewsRequest =
+      '<?xml version="1.0" encoding="utf-8"?>' +
+      '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" ' +
+                     'xmlns:t="http://schemas.microsoft.com/exchange/services/2006/types" ' +
+                     'xmlns:m="http://schemas.microsoft.com/exchange/services/2006/messages">' +
+        '<soap:Body>' +
+          '<m:CreateItem SendMeetingInvitations="SendToNone">' +
+            '<m:SavedItemFolderId>' +
+              '<t:DistinguishedFolderId Id="calendar"/>' +
+            '</m:SavedItemFolderId>' +
+            '<m:Items>' +
+              '<t:CalendarItem>' +
+                '<t:Subject>' + escXml(subject) + '</t:Subject>' +
+                '<t:Start>' + startISO + '</t:Start>' +
+                '<t:End>' + endISO + '</t:End>' +
+                '<t:LegacyFreeBusyStatus>Free</t:LegacyFreeBusyStatus>' +
+                '<t:ReminderIsSet>false</t:ReminderIsSet>' +
+              '</t:CalendarItem>' +
+            '</m:Items>' +
+          '</m:CreateItem>' +
+        '</soap:Body>' +
+      '</soap:Envelope>';
+
+    Office.context.mailbox.makeEwsRequestAsync(ewsRequest, function(result) {
+      if (result.status === Office.AsyncResultStatus.Failed) {
+        showToast('Calendar write failed - check permissions.', true);
+      }
+    });
+  }
+
+  function escXml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+            .replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+  }
+
+  // ---- LOG ----
+  function addToLog(start, end, text) {
+    const fmt = d => d.toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit', hour12: true });
+    logEntries.unshift({ time: fmt(start) + '-' + fmt(end), text });
+    saveLog();
+    renderLog();
+  }
+
+  function renderLog() {
+    const el = document.getElementById('logList');
+    if (!logEntries.length) {
+      el.innerHTML = '<div class="log-empty">— no entries yet —</div>';
+      return;
+    }
+    el.innerHTML = logEntries.map(e =>
+      '<div class="log-entry">' +
+        '<div class="log-time">' + e.time + '</div>' +
+        '<div class="log-text">' + e.text + '</div>' +
+      '</div>'
+    ).join('');
+  }
+
+  function saveLog() {
+    try {
+      localStorage.setItem('tl_log_' + new Date().toDateString(), JSON.stringify(logEntries));
+    } catch(e) {}
+  }
+
+  function loadLog() {
+    try {
+      const saved = localStorage.getItem('tl_log_' + new Date().toDateString());
+      if (saved) logEntries = JSON.parse(saved);
+    } catch(e) {}
+    renderLog();
+  }
+
+  function clearLog() {
+    logEntries = [];
+    saveLog();
+    renderLog();
+  }
+
+  // ---- TOAST ----
+  function showToast(msg, isError) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast' + (isError ? ' error' : '');
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2800);
+  }
+</script>
+</body>
+</html>
